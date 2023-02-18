@@ -115,6 +115,34 @@ get_page <- function(page_id, token = Sys.getenv("NOTION_TOKEN")) {
   return(page_info)
 }
 
+delete_page <- function(page_id, token = Sys.getenv("NOTION_TOKEN")) {
+  # build the request to query the database
+  req <- request(glue(base_url, "pages/", page_id)) %>%
+    req_method("PATCH") %>%
+    req_auth_bearer_token(token) %>%
+    req_headers(`Notion-Version` = '2022-06-28',
+                `Content-Type` = 'application/json') %>%
+    req_body_raw('{"archived": true}', 'application/x-www-form-urlencoded')
+  
+  # delete the page
+  page_info <- req %>%
+    req_perform()
+}
+
+restore_page <- function(page_id, token = Sys.getenv("NOTION_TOKEN")) {
+  # build the request to query the database
+  req <- request(glue(base_url, "pages/", page_id)) %>%
+    req_method("PATCH") %>%
+    req_auth_bearer_token(token) %>%
+    req_headers(`Notion-Version` = '2022-06-28',
+                `Content-Type` = 'application/json') %>%
+    req_body_raw('{"archived": false}', 'application/x-www-form-urlencoded')
+  
+  # delete the page
+  page_info <- req %>%
+    req_perform()
+}
+
 page_data_to_df <- function(page_list) {
   # extract properties
   list_properties <- page_list$properties
@@ -197,5 +225,4 @@ get_database_df <- function(db_id) {
   
 }
 
-get_page_df(all_pages[2])
 
