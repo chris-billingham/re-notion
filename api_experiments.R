@@ -33,6 +33,7 @@ db_id <- Sys.getenv("NOTION_DEMO_DB")
 
 base_url <- "https://api.notion.com/v1/"
 
+# function
 get_database <- function(db_id, token = Sys.getenv("NOTION_TOKEN")) {
   
   req <- request(glue(base_url, "databases/", db_id)) %>%
@@ -130,7 +131,7 @@ page_data_to_df <- function(page_list) {
   # lets do a loop, i'm sure i could use purrr
   for(x in 1:length(list_properties)) {
     # get the data out
-    data <- pluck(list_properties, col_names[x])
+    data <- pluck(list_properties, list_col_names[x])
     
     # apply the right transformation based on the vriable type, there is OBVIOUSLY
     # a better way of doing this but i am lazy. probs using switch
@@ -140,7 +141,7 @@ page_data_to_df <- function(page_list) {
     
     # create a list of result and name it appropriately
     var_result <- list(result)
-    names(var_result)[1] <- col_names[x]
+    names(var_result)[1] <- list_col_names[x]
     
     # add to the main list
     row_result <- c(row_result, var_result)
@@ -150,7 +151,7 @@ page_data_to_df <- function(page_list) {
   row_tibble <- as_tibble(row_result)
   
   # return the result
-  return(row_result)
+  return(row_tibble)
   
 }
 
@@ -164,7 +165,11 @@ extract_rich_text <- function(data_list) {
 }
 
 extract_date <- function(data_list) {
-  date <- ymd_hms(data_list$date$start)
+  if(is.null(data_list$date)) {
+    date <- NA_POSIXct_
+  } else {
+    date <- ymd_hms(data_list$date$start)
+  }
   return(date)
 }
 
@@ -176,3 +181,21 @@ extract_title <- function(data_list) {
   }
   return(text)
 }
+
+all_pages <- get_database_all_pages(db_id) 
+
+get_page_df <- function(page_id) {
+  page_list <- get_page(page_id)
+  page_df <- page_data_to_df(page_list)
+  return(page_df)
+}
+
+get_database_df <- function(db_id) {
+  all_pages <- get_database_all_pages(db_id)
+  
+  db_df <- map_dfr(all_pages, get_page_df)
+  
+}
+
+get_page_df(all_pages[2])
+
