@@ -1,6 +1,7 @@
 library(tidyverse)
 library(httr2)
 library(glue)
+library(lubridate)
 
 # get the token from .Renviron
 token <- Sys.getenv("NOTION_TOKEN")
@@ -100,7 +101,7 @@ get_database_all_pages <- function(db_id, token = Sys.getenv("NOTION_TOKEN")) {
 
 get_page <- function(page_id, token = Sys.getenv("NOTION_TOKEN")) {
   
-  # cereate the page request
+  # create the page request
   req <- request(glue(base_url, "pages/", page_id)) %>%
     req_auth_bearer_token(token) %>%
     req_headers(`Notion-Version` = '2022-06-28')
@@ -111,4 +112,67 @@ get_page <- function(page_id, token = Sys.getenv("NOTION_TOKEN")) {
     resp_body_json()
   
   return(page_info)
+}
+
+page_data_to_df <- function(page_list) {
+  # extract properties
+  list_properties <- page_list$properties
+  
+  # extract the names of the variables
+  list_col_names <- names(list_properties)
+  
+  # extract the variable types
+  list_types <- map_chr(list_properties, "type")
+  
+  # create a blank list
+  row_result <- list()
+  
+  # lets do a loop, i'm sure i could use purrr
+  for(x in 1:length(list_properties)) {
+    # get the data out
+    data <- pluck(list_properties, col_names[x])
+    
+    # apply the right transformation based on the vriable type, there is OBVIOUSLY
+    # a better way of doing this but i am lazy. probs using switch
+    if(list_types[x] == "rich_text"){result <- extract_rich_text(data)}
+    if(list_types[x] == "title"){result <- extract_title(data)}
+    if(list_types[x] == "date"){result <- extract_date(data)}
+    
+    # create a list of result and name it appropriately
+    var_result <- list(result)
+    names(var_result)[1] <- col_names[x]
+    
+    # add to the main list
+    row_result <- c(row_result, var_result)
+  }
+  
+  # cast it as a tibble
+  row_tibble <- as_tibble(row_result)
+  
+  # return the result
+  return(row_result)
+  
+}
+
+extract_rich_text <- function(data_list) {
+  if(length(data_list$rich_text) == 0) {
+    text = ""
+  } else {
+    text <-  data_list$rich_text[[1]]$plain_text
+  }
+  return(text)
+}
+
+extract_date <- function(data_list) {
+  date <- ymd_hms(data_list$date$start)
+  return(date)
+}
+
+extract_title <- function(data_list) {
+  if(length(data_list$title) == 0) {
+    text = ""
+  } else {
+    text <-  data_list$title[[1]]$plain_text
+  }
+  return(text)
 }
