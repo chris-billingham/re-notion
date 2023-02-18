@@ -98,3 +98,17 @@ get_database_all_pages <- function(db_id, token = Sys.getenv("NOTION_TOKEN")) {
   return(all_pages)
 }
 
+get_page <- function(page_id, token = Sys.getenv("NOTION_TOKEN")) {
+  
+  # cereate the page request
+  req <- request(glue(base_url, "pages/", page_id)) %>%
+    req_auth_bearer_token(token) %>%
+    req_headers(`Notion-Version` = '2022-06-28')
+  
+  # perform it and return json
+  page_info <- req %>%
+    req_perform() %>%
+    resp_body_json()
+  
+  return(page_info)
+}
