@@ -1,5 +1,6 @@
 library(tidyverse)
 library(httr2)
+library(glue)
 
 # get the token from .Renviron
 token <- Sys.getenv("NOTION_TOKEN")
@@ -35,7 +36,7 @@ get_database <- function(db_id, token = Sys.getenv("NOTION_TOKEN")) {
   
   req <- request(glue(base_url, "databases/", db_id)) %>%
     req_auth_bearer_token(token) %>%
-    req_headers(`Notion-Versions` = '2022-06-28')
+    req_headers(`Notion-Version` = '2022-06-28')
   
   db_info <- req %>%
     req_perform() %>%
