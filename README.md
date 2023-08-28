@@ -8,7 +8,7 @@ This will end up as a suite of tools for creating, updating, removing, and extra
 
 Current functions:
 
-`extract_database_from_url` - The URL of the database, and teh one passed by the API are different, with this function you can send the URL and it'll turn it into the right Database ID
+`extract_database_from_url` - The URL of the database, and the one passed by the API are different, with this function you can send the URL and it'll turn it into the right Database ID
 
 `get_database` - Gets the properties of the database.
 
